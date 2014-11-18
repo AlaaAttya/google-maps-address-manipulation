@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Google maps demo</title>
+	<style>
+        #map-canvas{
+            height: 30%;
+        }
+    </style>
+	<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAKWdNMxqng_iXcsFH5h_QS-0c4rU3kCVA&libraries=places"></script>
+	<script type="text/javascript">
+	
+		var autocomplete, map, marker;
+		
+		/**
+		 * Update the map markers from the autocomplete
+		 */
+		function setMarker(){
+			var place = autocomplete.getPlace();
+			var pos = new google.maps.LatLng(place.geometry.location.lat(),
+	                            place.geometry.location.lng());
+			marker.setAnimation(google.maps.Animation.BOUNCE);
+			marker.setPosition(pos);
+		}
+
+		/**
+		 * Initialize map with the current location
+		 */
+		function map_init () {
+			// Auto complete init
+			// Create the autocomplete object, restricting the search
+		  	// to geographical location types.
+		  	autocomplete = new google.maps.places.Autocomplete(
+			    /** @type {HTMLInputElement} */(document.getElementById('autocomplete')),
+			    { types: ['geocode'] });
+		  	// When the user selects an address from the dropdown,
+		  	// set the marker
+		  	google.maps.event.addListener(autocomplete, 'place_changed', function() {
+		    	setMarker();
+		  	});
+
+
+			var mapOptions = {
+                zoom: 8
+            };
+            map = new google.maps.Map(document.getElementById('map-canvas'),
+                    mapOptions);
+
+            // Try HTML5 geolocation
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var pos = new google.maps.LatLng(position.coords.latitude,
+                            position.coords.longitude);
+
+                    marker = new google.maps.Marker({
+                        position: pos,
+                        map: map, // handle of the map 
+                        draggable: true,
+                        animation: google.maps.Animation.DROP
+                    });
+
+                    // Add drag event listener to the map
+                    google.maps.event.addListener(marker, 'dragend', function(evt) {
+                        document.getElementById('lng').value = evt.latLng.lat().toFixed(6);
+                        document.getElementById('lat').value = evt.latLng.lng().toFixed(6);
+
+                        map.panTo(evt.latLng);
+                    });
+
+                    map.setCenter(pos);
+                }, function() {
+                    handleNoGeolocation(true);
+                });
+            } else {
+                // Browser doesn't support Geolocation
+                handleNoGeolocation(false);
+            }
+		}
+
+		/**
+		 * Handling browsers which do not support Geolocation
+		 */
+		function handleNoGeolocation(errorFlag) {
+            if (errorFlag) {
+                var content = 'Error: The Geolocation service failed.';
+            } else {
+                var content = 'Error: Your browser doesn\'t support geolocation.';
+            }
+
+            var options = {
+                map: map,
+                position: new google.maps.LatLng(60, 105),
+                content: content
+            };
+
+            var infowindow = new google.maps.InfoWindow(options);
+            map.setCenter(options.position);
+        }
+
+        // Add the map to DOM on page load
+        google.maps.event.addDomListener(window, 'load', map_init);
+	</script>
+</head>
+<body>
+	<input type="text" id="autocomplete"></input>
+	<div style="height:600px" id="map-canvas"></div>
+	<div>
+		Longitude <input type="text" id="lng" />
+		Latitude <input type="text" id="lat" />
+	</div>
+</body>
+</html>
